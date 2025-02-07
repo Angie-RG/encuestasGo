@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"os"
 
+	aplication "AngelicaRG/encuestasGo/app"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 )
@@ -13,7 +15,7 @@ func main() {
 	app := fiber.New()
 
 	if err := godotenv.Load(); err != nil {
-		slog.Error(fmt.Sprintf("Error al leer las varibles de entorno %v", err))
+		slog.Error(fmt.Sprintf("Couldn't read the variables environment %v", err))
 		os.Exit(1)
 	}
 
@@ -24,8 +26,10 @@ func main() {
 		})
 	})
 
+	aplication.Seeders()
+
 	if err := app.Listen(os.Getenv("APP_ADDRESS")); err != nil {
-		slog.Error(fmt.Sprintf("No se pudo conectar al server %v", err))
+		slog.Error(fmt.Sprintf("Could'nt connection server %v", err))
 		os.Exit(1)
 	}
 }
