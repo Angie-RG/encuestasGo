@@ -1,0 +1,36 @@
+networks:
+  my_red: 
+services:
+  backend:
+    build: .
+    container_name: backend
+    env_file:
+      - .env
+    ports:
+      - 8000:8000
+    restart: always
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    networks:
+      - my_red
+  db:
+    image: postgres
+    container_name: postgres-container
+    #restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: encuestas
+    ports:
+      - 5432:5432
+    networks:
+      - my_red
+
+  cache_db:
+    container_name: cache_db
+    image: redis:7.4-alpine3.20
+    expose:
+      - 6379
+    restart: always
