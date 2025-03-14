@@ -2,6 +2,8 @@ package app
 
 import (
 	"AngelicaRG/encuestasGo/models"
+	"AngelicaRG/encuestasGo/utils"
+	"errors"
 	"fmt"
 	"log"
 	"log/slog"
@@ -18,6 +20,11 @@ var (
 	db     *gorm.DB
 	onceDB sync.Once
 )
+
+type UserRole struct {
+	User models.User
+	Role models.Role
+}
 
 func DB() *gorm.DB {
 	onceDB.Do(func() {
@@ -61,6 +68,7 @@ func DB() *gorm.DB {
 
 func Seeders() {
 	configRoles()
+	setupUsers()
 }
 
 func configRoles() {
@@ -78,4 +86,75 @@ func configRoles() {
 			continue
 		}
 	}
+}
+
+func setupUsers() {
+	active := true
+	pass := os.Getenv("GENERATE_PASSWORD")
+
+	userRoles := []UserRole{
+		{
+			User: models.User{
+				FirstName: utils.ToString("Melinda"),
+				LastName:  utils.ToString("Gordon"),
+				Email:     "melinda.gordon@outlook.com",
+				Active:    &active,
+				Password:  pass,
+			},
+			Role: models.Role{
+				Name: "admin",
+			},
+		},
+		{
+			User: models.User{
+				FirstName: utils.ToString("Sebastian Alan"),
+				LastName:  utils.ToString("Rodriguez Hernandez"),
+				Email:     "sebastian.hernandez@outlook.com",
+				Active:    &active,
+				Password:  pass,
+			},
+			Role: models.Role{
+				Name: "superAdmin",
+			},
+		},
+		{
+			User: models.User{
+				FirstName: utils.ToString("Caroline Diana"),
+				LastName:  utils.ToString("Lopez"),
+				Email:     "caroline.lopez@outlook",
+				Active:    &active,
+				Password:  pass,
+			},
+			Role: models.Role{
+				Name: "user",
+			},
+		},
+	}
+
+	if err := DB().Transaction(func(tx *gorm.DB) error {
+		for _, data := range userRoles {
+			user := data.User
+			if err := tx.Where(&models.User{Email: user.Email}).FirstOrCreate(&user).Error; err != nil {
+				slog.Error(fmt.Sprintf("The user could not be created: %v", err))
+				return errors.New("Error occurred while creating the user.")
+			}
+
+			role := data.Role
+			if err := tx.Where(&role).First(&role).Error; err != nil {
+				slog.Error(fmt.Sprintf("Could not be found the rol: %v", err))
+				return errors.New("Could not be found rol")
+			}
+
+			userRole := &models.UserRole{UserID: user.ID, RoleID: role.ID, CreatedByID: user.ID, UpdatedByID: user.ID}
+			if err := tx.Where(&userRole).FirstOrCreate(&userRole).Error; err != nil {
+				slog.Error(fmt.Sprintf("Could not assign role of user: %v", err))
+				return errors.New("Could not assign role of user")
+			}
+		}
+
+		return nil
+	}); err != nil {
+		slog.Error(fmt.Sprintf("Error could not create roles of user: %v", err))
+	}
+
 }
