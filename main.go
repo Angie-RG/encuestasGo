@@ -6,6 +6,7 @@ import (
 	"os"
 
 	aplication "AngelicaRG/encuestasGo/app"
+	"AngelicaRG/encuestasGo/routes"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
@@ -27,6 +28,9 @@ func main() {
 	})
 
 	aplication.Seeders()
+
+	//routes
+	routes.SetupRoutes(app)
 
 	if err := app.Listen(os.Getenv("APP_ADDRESS")); err != nil {
 		slog.Error(fmt.Sprintf("Could'nt connection server %v", err))
